@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>motive — цифровые двойники для рилсов</title>
+<meta name="description" content="motive создаёт AI-двойников, которые снимают рилсы за вас: аватар, клон голоса, контент-план и готовые ролики без камеры и студии.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #FF4A12;
+    --orange-2: #E83A0C;
+    --orange-deep: #B8280A;
+    --orange-base: #D63A0C;      /* фон hero: белый текст 4.7:1 */
+    --on-orange-accent: #3A0A02; /* тёмный акцент на оранжевом, 3.6:1 для крупного текста */
+    --brand-text: #C2300A;       /* оранжевый текст на белом, 5.6:1 */
+    --muted-2: #9A989E;          /* подписи на тёмных карточках, ≥5.9:1 */
+    --focus: #FFFFFF;
+    --bg: #0E0E10;
+    --card: #161618;
+    --card-2: #1D1D21;
+    --line: rgba(255,255,255,.08);
+    --text: #F4F2EF;
+    --muted: #8E8C92;
+    --dark-btn: #1B1B1D;
+    --radius-xl: 40px;
+    --radius-lg: 28px;
+    --gutter: clamp(16px, 3vw, 40px);
+    --font: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Unbounded", var(--font);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  a, button, summary { touch-action: manipulation; }
+  a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 3px;
+  }
+  .faq summary:focus-visible { outline-offset: -4px; border-radius: 24px; }
+  .skip {
+    position: absolute; left: 16px; top: -80px; z-index: 100;
+    padding: 12px 20px; border-radius: 12px; background: #fff; color: #111; font-weight: 600;
+    transition: top .2s;
+  }
+  .skip:focus { top: 16px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 17px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+
+  /* ---------- общие элементы ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    height: 64px; padding: 0 36px; border-radius: 999px;
+    font-weight: 500; font-size: 18px; letter-spacing: -.01em;
+    transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+    white-space: nowrap;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0) scale(.98); }
+  .btn-dark {
+    background: linear-gradient(180deg, #2A2A2D, #151517);
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 18px 34px -10px rgba(0,0,0,.6), 0 4px 0 #0b0b0c;
+  }
+  .btn-light {
+    background: linear-gradient(180deg, #fff, #ECEAE7);
+    color: #121212;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.08), 0 18px 34px -12px rgba(0,0,0,.35);
+  }
+  .btn-orange {
+    background: linear-gradient(180deg, #DA3F0E, #BC2E08);
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 18px 34px -12px rgba(255,74,18,.55);
+  }
+  .btn-sm { height: 52px; padding: 0 28px; font-size: 16px; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 999px;
+    background: var(--card-2); border: 1px solid var(--line);
+    font-size: 14px; font-weight: 500; color: #CFCDD2;
+  }
+  .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 12px var(--orange); }
+
+  .section { padding: clamp(80px, 11vw, 150px) var(--gutter) 0; max-width: 1440px; margin: 0 auto; }
+  .section-head { text-align: center; max-width: 900px; margin: 0 auto clamp(44px, 6vw, 80px); }
+  .section-title {
+    font-size: clamp(40px, 6.4vw, 92px);
+    font-weight: 500; line-height: .98; letter-spacing: -.055em;
+    margin-top: 22px; text-wrap: balance;
+    background: linear-gradient(180deg, #fff 30%, #7C7A80);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .section-sub { color: var(--muted); font-size: 19px; margin-top: 20px; text-wrap: balance; }
+
+  .js .reveal { opacity: 0; transform: translateY(36px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
+  .js .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative;
+    margin: 12px;
+    border-radius: 32px;
+    overflow: hidden;
+    min-height: clamp(800px, calc(100vh - 24px), 980px);
+    min-height: clamp(800px, calc(100dvh - 24px), 980px);
+    background:
+      radial-gradient(32% 46% at 54% 32%, rgba(255,112,44,.55), transparent 70%),
+      radial-gradient(70% 60% at 0% 100%, rgba(120,16,0,.35), transparent 70%),
+      var(--orange-base);
+    color: #fff;
+    isolation: isolate;
+  }
+  .hero::after { /* лёгкое зерно */
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .12; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .bg-word {
+    position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
+    z-index: 0;
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 23vw; line-height: .8; letter-spacing: -.06em;
+    color: rgba(255,255,255,.1);
+    white-space: nowrap; pointer-events: none; user-select: none;
+  }
+
+  .nav {
+    position: relative; z-index: 5;
+    display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 40px;
+    padding: 28px 32px 0 32px;
+  }
+  .logo { display: inline-flex; align-items: center; gap: 12px; font-weight: 600; font-size: 22px; letter-spacing: -.03em; }
+  .logo svg { width: 64px; height: 40px; }
+  .nav-date { font-size: 18px; line-height: 1.35; padding-left: 90px; }
+  .nav-date b { font-weight: 500; display: block; }
+  .nav-links { display: flex; gap: 52px; font-size: 18px; }
+  .nav-links a { opacity: .95; position: relative; }
+  .nav-links a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: #fff; transform: scaleX(0); transform-origin: left; transition: transform .3s; }
+  .nav-links a:hover::after { transform: scaleX(1); }
+  .menu-btn { display: none; width: 52px; height: 52px; border-radius: 50%; place-items: center; background: rgba(0,0,0,.18); }
+  .menu-btn svg { width: 22px; height: 22px; }
+
+  .hero-grid {
+    position: relative; z-index: 3;
+    display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr) minmax(0, .78fr);
+    gap: 24px;
+    padding: clamp(36px, 6vh, 90px) 32px 170px;
+  }
+  .hero-left { position: relative; z-index: 4; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 22px; border-radius: 10px;
+    background: #fff; color: var(--brand-text);
+    font-weight: 500; font-size: 18px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.08), 0 14px 30px -10px rgba(0,0,0,.35);
+  }
+  .badge svg { width: 22px; height: 22px; }
+  .hero h1 {
+    margin-top: 32px;
+    font-size: clamp(46px, 5.4vw, 92px);
+    font-weight: 500; line-height: .9; letter-spacing: -.06em;
+  }
+  .hero-left:focus { outline: none; }
+  .hero h1 .line { display: block; white-space: nowrap; }
+  .pill {
+    position: relative; display: inline-block; vertical-align: middle;
+    width: 2.3em; height: .78em; margin-left: .12em; margin-top: -.12em;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #E02A12, #F04818);
+    box-shadow: inset 0 6px 14px rgba(120,10,0,.55), inset 0 -1px 0 rgba(255,255,255,.25);
+  }
+  .tile {
+    position: absolute; width: .56em; height: .56em; border-radius: .12em;
+    background: #fff; display: grid; place-items: center;
+    box-shadow: 0 10px 20px -6px rgba(0,0,0,.45), inset 0 -3px 0 rgba(0,0,0,.08);
+    animation: float 5s ease-in-out infinite;
+  }
+  .tile svg { width: 55%; height: 55%; }
+  .tile.t1 { left: .28em; top: -.24em; transform: rotate(-22deg); animation-delay: -1s; }
+  .tile.t2 { left: 1.3em; top: .26em; transform: rotate(14deg); animation-delay: -2.5s; }
+  .tile.t3 { left: .74em; top: .72em; transform: rotate(-10deg); width: .48em; height: .48em; animation-delay: -3.5s; }
+  @keyframes float { 0%,100% { translate: 0 0; } 50% { translate: 0 -.08em; } }
+
+  .hero-sub { margin-top: 30px; max-width: 500px; font-size: clamp(18px, 1.55vw, 24px); line-height: 1.45; letter-spacing: -.01em; color: #fff; font-weight: 400; }
+  .hero-cta { display: flex; gap: 18px; margin-top: 38px; flex-wrap: wrap; }
+
+  .hero-photo {
+    position: absolute; z-index: 2; bottom: 0; left: 50%;
+    height: min(94%, 1100px); width: auto; max-width: none;
+    transform: translateX(-40%);
+    filter: drop-shadow(-30px 20px 60px rgba(90,10,0,.35));
+    pointer-events: none;
+  }
+
+  .hero-right { grid-column: 3; display: flex; flex-direction: column; z-index: 4; padding-top: 70px; }
+  .quote { min-height: 130px; font-size: 19px; line-height: 1.38; letter-spacing: -.02em; transition: opacity .4s; }
+  .quote small { display: block; margin-top: 14px; font-size: 15px; }
+  .slider-bar { display: flex; align-items: center; gap: 20px; margin-top: auto; padding-top: 60px; }
+  .track { flex: 1; height: 2px; background: rgba(255,255,255,.35); position: relative; border-radius: 2px; overflow: hidden; }
+  .track i { position: absolute; top: 0; bottom: 0; left: 0; width: 33.33%; background: #fff; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
+  .arrows { display: flex; gap: 8px; }
+  .arrows button { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; transition: background .2s; }
+  .arrows button:hover { background: rgba(255,255,255,.15); }
+  .arrows svg { width: 18px; height: 18px; }
+  .stat-label { margin-top: 44px; font-size: 16px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+  .stat-num { font-size: clamp(90px, 9vw, 150px); font-weight: 400; letter-spacing: -.07em; line-height: .9; margin-top: 28px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .stat-num em { font-style: normal; color: var(--on-orange-accent); }
+  .stat-note { font-size: 15px; margin-top: 10px; }
+
+  .scroll-hint { position: absolute; z-index: 4; left: 50%; bottom: 128px; transform: translateX(-50%); display: flex; align-items: center; gap: 18px; font-size: 18px; }
+  .scroll-hint span { width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--brand-text); display: grid; place-items: center; animation: bob 2s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(5px); } }
+
+  .marquee { position: absolute; z-index: 4; left: 0; right: 0; bottom: 30px; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+  .marquee-inner { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+  .marquee-row { display: flex; list-style: none; }
+  .marquee-item { display: flex; align-items: center; gap: 12px; padding: 0 56px; font-size: 30px; font-weight: 600; letter-spacing: -.03em; color: rgba(255,255,255,.88); white-space: nowrap; }
+  .marquee-item svg { width: 30px; height: 30px; }
+  .marquee:hover .marquee-inner { animation-play-state: paused; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+  /* ---------- ПРОЦЕСС ---------- */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .step {
+    position: relative; padding: 32px 28px 30px; border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, #19191C, #131315);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 40px 70px -40px rgba(0,0,0,.9);
+    min-height: 330px; display: flex; flex-direction: column;
+  }
+  .step-num { font-family: var(--font-display); font-size: 56px; font-weight: 700; letter-spacing: -.05em; color: var(--orange); line-height: 1; }
+  .step-chip { position: absolute; top: 30px; right: 26px; font-size: 13px; padding: 6px 12px; border-radius: 999px; background: #222226; color: #BDBBC0; border: 1px solid var(--line); }
+  .step h3 { margin-top: auto; font-size: 25px; font-weight: 500; letter-spacing: -.03em; line-height: 1.15; }
+  .step p { margin-top: 12px; color: var(--muted); font-size: 16px; }
+  .step:not(:last-child)::after {
+    content: ""; position: absolute; top: 58px; right: -14px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--orange); box-shadow: 0 0 0 5px var(--bg); z-index: 2;
+  }
+
+  /* ---------- КЕЙСЫ ---------- */
+  .cases { background: linear-gradient(180deg, #18181B, #121214); border-radius: 44px; padding: 22px; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 60px 100px -50px rgba(0,0,0,.9); }
+  .stage {
+    position: relative; height: 600px; border-radius: 34px; overflow: hidden;
+    border: 3px solid #050506;
+    background:
+      radial-gradient(40% 55% at 50% 60%, var(--glow, rgba(255,74,18,.35)), transparent 70%),
+      linear-gradient(180deg, #1C1C20, #0F0F11);
+    transition: --glow .6s;
+  }
+  .stage::before { /* центральный разделитель как в референсе */
+    content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #050506; transform: translateX(-50%); z-index: 0;
+  }
+  .stage-top { position: absolute; top: 26px; left: 30px; right: 30px; display: flex; justify-content: space-between; align-items: center; z-index: 3; font-size: 14px; color: #AFADB2; }
+  .stage-top .logo { font-size: 18px; color: #fff; }
+  .stage-top .logo svg { width: 42px; height: 26px; }
+  .stage-icons { display: flex; gap: 8px; }
+  .stage-icons span { width: 44px; height: 44px; border-radius: 12px; background: #1F1F23; border: 1px solid var(--line); display: grid; place-items: center; }
+  .stage-icons svg { width: 18px; height: 18px; }
+
+  .phone {
+    position: absolute; z-index: 2; left: 50%; top: 92px; transform: translateX(-50%);
+    width: 270px; height: 560px; border-radius: 42px; padding: 9px;
+    background: #050506;
+    box-shadow: 0 50px 80px -20px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 34px; overflow: hidden; background: var(--screen, linear-gradient(160deg, #FF5A1F, #7A1A05)); transition: background .6s; }
+  .screen img { position: absolute; left: 50%; bottom: -10px; height: 92%; width: auto; max-width: none; transform: translateX(-50%); }
+  .screen .reel-top { position: absolute; top: 18px; left: 16px; right: 16px; display: flex; gap: 4px; }
+  .screen .reel-top i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,.35); }
+  .screen .reel-top i:first-child { background: #fff; }
+  .screen .reel-user { position: absolute; top: 34px; left: 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .screen .reel-user b { width: 26px; height: 26px; border-radius: 50%; background: #fff; display: block; }
+  .subs {
+    position: absolute; left: 14px; right: 54px; bottom: 120px;
+    font-weight: 700; font-size: 19px; line-height: 1.15; letter-spacing: -.02em; text-align: center;
+    text-shadow: 0 2px 10px rgba(0,0,0,.6);
+  }
+  .subs mark { background: #FFD43B; color: #111; padding: 0 4px; border-radius: 4px; }
+  .reel-side { position: absolute; right: 12px; bottom: 110px; display: flex; flex-direction: column; gap: 16px; align-items: center; font-size: 11px; font-weight: 600; }
+  .reel-side svg { width: 26px; height: 26px; display: block; margin: 0 auto 3px; }
+  .reel-caption { position: absolute; left: 16px; right: 16px; bottom: 22px; font-size: 12px; opacity: .9; }
+
+  .callout { position: absolute; z-index: 3; font-size: 14px; line-height: 1.25; color: #fff; display: flex; align-items: center; gap: 12px; }
+  .callout small { display: block; color: var(--muted); }
+  .callout::before, .callout::after { content: ""; }
+  .callout.l { flex-direction: row; }
+  .callout.l::after { width: 150px; height: 1px; background: rgba(255,255,255,.3); order: 2; }
+  .callout.l .dot, .callout.r .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); order: 3; flex: none; box-shadow: 0 0 10px var(--orange); }
+  .callout.r .dot { order: 0; }
+  .callout.r::before { width: 150px; height: 1px; background: rgba(255,255,255,.3); order: 1; }
+  .callout.r .txt { order: 2; }
+  .c1 { left: calc(50% - 395px); top: 210px; }
+  .c2 { left: calc(50% - 395px); top: 420px; }
+  .c3 { left: calc(50% + 120px); top: 160px; }
+  .c4 { left: calc(50% + 120px); top: 360px; }
+
+  .stage-metric { position: absolute; z-index: 3; right: 40px; bottom: 34px; text-align: right; }
+  .stage-metric b { display: block; font-size: clamp(56px, 7vw, 104px); font-weight: 500; letter-spacing: -.06em; line-height: .9; font-variant-numeric: tabular-nums; }
+  .stage-metric span { font-size: clamp(22px, 2.4vw, 34px); color: var(--muted-2); letter-spacing: -.03em; }
+  .stage-niche { position: absolute; z-index: 3; left: 32px; bottom: 34px; font-size: 14px; color: var(--muted); }
+  .stage-vbar { position: absolute; z-index: 3; left: 32px; top: 200px; width: 2px; height: 220px; background: rgba(255,255,255,.12); }
+  .stage-vbar i { position: absolute; left: 0; width: 2px; height: 25%; background: #fff; transition: top .5s cubic-bezier(.2,.7,.2,1); }
+
+  .fade { transition: opacity .35s ease, transform .35s ease; }
+  .fade.out { opacity: 0; transform: translateY(8px); }
+
+  .cases-nav { display: flex; align-items: center; justify-content: space-between; padding: 30px 40px 26px; }
+  .dots { display: flex; gap: 10px; }
+  .dots { gap: 4px; }
+  .dots button { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; }
+  .dots button::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: #4A4A50; transition: background .3s, transform .3s; }
+  .dots button[aria-current="true"]::before { background: var(--orange); transform: scale(1.15); }
+  .cases-arrows { display: flex; gap: 10px; }
+  .cases-arrows button { width: 52px; height: 52px; border-radius: 50%; background: #1F1F23; border: 1px solid var(--line); display: grid; place-items: center; transition: background .2s; }
+  .cases-arrows button:hover { background: #2A2A2F; }
+  .cases-arrows svg { width: 20px; height: 20px; }
+  .case-info { display: grid; grid-template-columns: 1.4fr 1.2fr .9fr .6fr; gap: 40px; padding: 34px 40px 36px; border-top: 1px solid var(--line); margin: 0 18px; }
+  .case-info h3 { font-size: clamp(30px, 3.4vw, 50px); font-weight: 400; line-height: 1.12; letter-spacing: -.04em; }
+  .case-info dt { font-size: 15px; text-transform: uppercase; color: var(--muted-2); letter-spacing: .02em; }
+  .case-info dd { margin-top: 10px; font-size: 18px; line-height: 1.5; }
+
+  /* ---------- ПОЧЕМУ МЫ ---------- */
+  .why { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+  .why-card {
+    position: relative; overflow: hidden;
+    padding: 56px 60px 52px; border-radius: 44px; min-height: 560px;
+    display: flex; flex-direction: column;
+    background: linear-gradient(180deg, #19191C, #131315);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 3px 0 #0A0A0B, 0 50px 90px -50px rgba(0,0,0,.95);
+  }
+  .why.second { grid-template-columns: 1fr 1.4fr; margin-top: 24px; }
+  .why-card h3 { text-wrap: balance; margin-top: auto; font-size: clamp(26px, 2.4vw, 34px); font-weight: 500; letter-spacing: -.035em; }
+  .why-card p { margin-top: 16px; font-size: 19px; color: var(--muted); max-width: 560px; line-height: 1.55; }
+  .why-art { flex: 1; position: relative; min-height: 330px; margin-bottom: 36px; }
+
+  .soft {
+    background: linear-gradient(180deg, #222226, #1A1A1D);
+    border: 1px solid rgba(255,255,255,.05);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 6px 0 #0D0D0F, 0 18px 30px -12px rgba(0,0,0,.8);
+  }
+  .bars { display: grid; gap: 22px; padding-top: 4px; }
+  .bar-row { display: flex; align-items: center; gap: 14px; }
+  .bar { height: 54px; border-radius: 14px; position: relative; overflow: hidden; }
+  .bar i { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, rgba(255,74,18,.15), rgba(255,74,18,.55)); transition: width 1.6s cubic-bezier(.2,.7,.2,1); }
+  .in .bar i { width: var(--w); }
+  .chip { display: inline-flex; align-items: center; gap: 10px; height: 54px; padding: 0 22px; border-radius: 14px; font-size: 19px; font-weight: 500; white-space: nowrap; }
+  .chip svg { width: 22px; height: 22px; color: #BDBBC0; }
+
+  .checks { display: grid; place-items: center; }
+  .checks .rail { position: absolute; left: 0; right: 0; top: 50%; height: 36px; margin-top: -18px; border-radius: 12px; }
+  .checks .row { position: relative; display: flex; gap: clamp(16px, 2.4vw, 36px); }
+  .checks .box { width: clamp(84px, 9vw, 124px); height: clamp(84px, 9vw, 124px); border-radius: 20px; display: grid; place-items: center; }
+  .checks .box svg { width: 62px; height: 62px; }
+  .checks .box.mid { transform: translateY(-8px); background: linear-gradient(180deg, #2A2A2F, #202024); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 10px 0 #0D0D0F, 0 40px 50px -16px rgba(0,0,0,.9); }
+  .checks .box.mid svg { color: var(--orange); }
+
+  .shield { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 270px; height: 300px; }
+  .lock { position: absolute; left: 50%; top: 46px; transform: translateX(-50%); width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; }
+  .lock svg { width: 46px; height: 46px; }
+
+  .chat { position: absolute; left: 0; top: 50px; width: 270px; height: 190px; border-radius: 48px 48px 48px 48px; padding: 52px 36px; }
+  .chat i { display: block; height: 5px; border-radius: 4px; background: #E8E6E3; margin-bottom: 12px; }
+  .chat i:nth-child(2) { width: 62%; } .chat i:nth-child(3) { width: 40%; } .chat i:nth-child(4) { width: 80%; }
+  .chat::after { content: ""; position: absolute; right: -14px; bottom: 30px; border: 12px solid transparent; border-left-color: #1C1C1F; }
+  .mini { position: absolute; right: 50px; top: 0; width: 280px; height: 330px; border-radius: 26px; padding: 28px; }
+  .mini .head { display: flex; align-items: center; gap: 14px; }
+  .mini .ava { width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; }
+  .mini .ava svg { width: 38px; height: 24px; }
+  .mini .lines i { display: block; height: 7px; border-radius: 4px; background: #2C2C31; width: 130px; margin: 8px 0; }
+  .mini .lines i:last-child { width: 70px; }
+  .mini .boxx { margin-top: 30px; height: 110px; border-radius: 14px; }
+  .mini .ok { position: absolute; right: -40px; bottom: 34px; width: 92px; height: 92px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(180deg, #FF6A33, var(--orange-2)); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 20px 40px -10px rgba(255,74,18,.55); }
+  .mini .ok svg { width: 40px; height: 40px; color: #fff; }
+
+  /* ---------- ТАРИФЫ ---------- */
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: stretch; }
+  .plan {
+    position: relative; display: flex; flex-direction: column;
+    padding: 40px 36px 36px; border-radius: 36px;
+    background: linear-gradient(180deg, #19191C, #131315);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 3px 0 #0A0A0B, 0 50px 90px -50px rgba(0,0,0,.95);
+  }
+  .plan.hot {
+    background: radial-gradient(120% 80% at 50% 0%, #E9481A, #D23A0C 55%, #B42C08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 50px 90px -40px rgba(255,74,18,.55);
+    transform: translateY(-14px);
+  }
+  .plan-tag { position: absolute; top: 34px; right: 30px; padding: 8px 14px; border-radius: 999px; background: #fff; color: var(--brand-text); font-size: 13px; font-weight: 600; }
+  .plan-name { font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
+  .plan-desc { margin-top: 6px; font-size: 16px; color: var(--muted); }
+  .plan.hot .plan-desc { color: #fff; }
+  .price { margin-top: 34px; display: flex; align-items: baseline; gap: 10px; }
+  .price b { font-size: clamp(60px, 5.6vw, 84px); font-weight: 500; letter-spacing: -.06em; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .price span { font-size: 16px; color: var(--muted); white-space: nowrap; }
+  .plan.hot .price span { color: #fff; }
+  .plan ul { list-style: none; margin: 34px 0 36px; padding-top: 28px; border-top: 1px solid var(--line); display: grid; gap: 14px; }
+  .plan.hot ul { border-color: rgba(255,255,255,.25); }
+  .plan li { display: flex; gap: 12px; font-size: 16.5px; line-height: 1.4; }
+  .plan li svg { flex: none; width: 22px; height: 22px; margin-top: 0; color: var(--orange); }
+  .plan.hot li svg { color: #fff; }
+  .plan li.off { color: var(--muted); }
+  .plan li.off svg { color: #5A585E; }
+  .plan li b { font-weight: 600; }
+  .plan .btn { margin-top: auto; width: 100%; }
+  .plans-note { text-align: center; margin-top: 40px; color: var(--muted); font-size: 16px; }
+
+  /* ---------- FAQ ---------- */
+  .faq { max-width: 980px; margin: 0 auto; display: grid; gap: 12px; }
+  .faq details { border-radius: 24px; background: linear-gradient(180deg, #18181B, #131315); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); overflow: hidden; }
+  .faq summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 28px 32px; font-size: 21px; font-weight: 500; letter-spacing: -.02em; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary span { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #222226; display: grid; place-items: center; transition: transform .3s, background .3s; }
+  .faq details[open] summary span { transform: rotate(45deg); background: var(--orange); }
+  .faq summary svg { width: 18px; height: 18px; }
+  .faq .ans { padding: 0 32px 28px; color: var(--muted); font-size: 17.5px; max-width: 820px; }
+
+  /* ---------- CTA ---------- */
+  .cta {
+    position: relative; overflow: hidden; isolation: isolate;
+    margin: clamp(80px, 11vw, 150px) 12px 0; border-radius: 40px;
+    padding: clamp(60px, 8vw, 110px) var(--gutter);
+    background: radial-gradient(90% 90% at 30% 20%, #E9481A, #D23A0C 55%, #B42C08);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: end;
+  }
+  .cta .bg-word { bottom: -2vw; font-size: 26vw; color: rgba(255,255,255,.09); }
+  .cta h2 { text-wrap: balance; position: relative; font-size: clamp(44px, 6.6vw, 104px); font-weight: 500; letter-spacing: -.06em; line-height: .92; }
+  .cta p { position: relative; font-size: 20px; line-height: 1.45; max-width: 460px; color: #fff; }
+  .cta .btn { position: relative; margin-top: 30px; }
+  .cta small { position: relative; display: block; margin-top: 18px; font-size: 15px; }
+
+  footer { max-width: 1440px; margin: 0 auto; padding: 48px var(--gutter) 40px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 15px; }
+  footer .logo { color: #fff; }
+  footer nav { display: flex; gap: 28px; flex-wrap: wrap; }
+  footer nav a:hover { color: #fff; }
+
+  /* ---------- адаптив ---------- */
+  @media (max-width: 1320px) and (min-width: 1101px) {
+    .hero-photo { transform: translateX(-33%); }
+  }
+  @media (max-width: 1280px) {
+    .nav-date { padding-left: 20px; }
+    .nav-links { gap: 30px; }
+    .c1, .c2 { left: calc(50% - 340px); }
+    .callout.l::after, .callout.r::before { width: 100px; }
+  }
+  @media (max-width: 1100px) {
+    .nav-date { display: none; }
+    .nav { grid-template-columns: auto 1fr auto auto; }
+    .nav-links { justify-self: end; }
+    .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, .7fr); padding-bottom: 220px; }
+    .hero-right { grid-column: 2; }
+    .hero-photo { left: 72%; height: 80%; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .step:nth-child(2)::after { display: none; }
+    .case-info { grid-template-columns: 1fr 1fr; }
+    .why, .why.second { grid-template-columns: 1fr; }
+    .plans { grid-template-columns: 1fr; max-width: 560px; margin: 0 auto; }
+    .plan.hot { transform: none; }
+    .callout { display: none; }
+  }
+  @media (max-width: 820px) {
+    body { font-size: 16px; }
+    .nav { padding: 18px 16px 0; gap: 10px; grid-template-columns: 1fr auto auto; }
+    .menu-btn { display: grid; }
+    .nav-links {
+      display: none; position: absolute; top: calc(100% + 10px); left: 16px; right: 16px;
+      flex-direction: column; gap: 0; padding: 8px; border-radius: 20px;
+      background: #141416; box-shadow: 0 30px 60px -20px rgba(0,0,0,.7);
+    }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 14px 16px; border-radius: 12px; }
+    .nav-links a::after { display: none; }
+    .logo svg { width: 52px; height: 32px; }
+    .hero { margin: 8px; border-radius: 24px; min-height: 0; }
+    .hero-grid { grid-template-columns: 1fr; padding: 44px 16px 0; gap: 0; }
+    .badge { font-size: 15px; padding: 10px 16px; }
+    .hero h1 { margin-top: 28px; font-size: clamp(38px, 11.4vw, 64px); }
+    .hero-sub { margin-top: 26px; }
+    .hero-cta { margin-top: 30px; gap: 12px; }
+    .hero-cta .btn { flex: 1 1 200px; height: 58px; padding: 0 22px; font-size: 17px; }
+    .hero-photo { left: auto; right: -80px; transform: none; bottom: 110px; height: 640px; }
+    .hero-right { grid-column: 1; padding: 470px 0 170px; position: relative; z-index: 4; text-shadow: 0 2px 16px rgba(0,0,0,.35); }
+    .hero-right .quote, .hero-right .slider-bar { display: none; }
+    .quote { min-height: 0; }
+    .slider-bar { padding-top: 26px; }
+    .stat-label { margin-top: 30px; }
+    .stat-num { font-size: 104px; margin-top: 14px; }
+    .scroll-hint { bottom: 112px; font-size: 16px; white-space: nowrap; }
+    .marquee-item { font-size: 22px; padding: 0 30px; }
+    .marquee-item svg { width: 22px; height: 22px; }
+    .bg-word { font-size: 38vw; bottom: 90px; }
+
+    .steps { grid-template-columns: 1fr; }
+    .step { min-height: 0; padding: 26px 22px; }
+    .step h3 { margin-top: 40px; font-size: 22px; }
+    .step::after { display: none; }
+
+    .cases { padding: 10px; border-radius: 30px; }
+    .stage { height: 650px; border-radius: 24px; }
+    .stage::before, .stage-vbar, .stage-top .stage-icons { display: none; }
+    .stage-top { left: 20px; right: 20px; top: 20px; }
+    .phone { top: 70px; width: 236px; height: 470px; border-radius: 36px; }
+    .screen { border-radius: 28px; }
+    .subs { font-size: 16px; bottom: 100px; }
+    .stage-metric { left: 20px; right: 20px; bottom: 20px; text-align: center; }
+    .stage-metric b { font-size: 46px; display: inline; }
+    .stage-metric span { font-size: 16px; display: block; }
+    .stage-niche { display: none; }
+    .cases-nav { padding: 22px 14px 18px; }
+    .case-info { grid-template-columns: 1fr; gap: 20px; padding: 24px 14px 20px; margin: 0; }
+
+    .why-card { padding: 34px 24px 30px; min-height: 0; border-radius: 30px; }
+    .why-card p { font-size: 16.5px; }
+    .why-art { min-height: 250px; margin-bottom: 24px; }
+    .chip { height: 44px; font-size: 15px; padding: 0 14px; }
+    .bar { height: 44px; }
+    .bar-row .bar { flex: 1 1 0 !important; min-width: 40px; }
+    .bars { gap: 14px; }
+    .checks .row { gap: 16px; }
+    .checks .box { width: 84px; height: 84px; border-radius: 16px; }
+    .checks .box svg { width: 38px; height: 38px; }
+    .shield { width: 210px; height: 236px; }
+    .lock { width: 92px; height: 92px; top: 40px; }
+    .chat { width: 180px; height: 130px; padding: 36px 24px; top: 30px; border-radius: 34px; }
+    .mini { right: 30px; width: 170px; height: 240px; padding: 18px; }
+    .mini .ava { width: 44px; height: 44px; }
+    .mini .lines i { width: 60px; }
+    .mini .boxx { height: 70px; margin-top: 18px; }
+    .mini .ok { width: 64px; height: 64px; right: -24px; bottom: 30px; }
+
+    .plan { padding: 32px 24px 26px; border-radius: 28px; }
+    .faq summary { padding: 22px 20px; font-size: 18px; }
+    .faq .ans { padding: 0 20px 22px; font-size: 16px; }
+    .cta { grid-template-columns: 1fr; margin: 80px 8px 0; border-radius: 28px; }
+    .cta .btn { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .js .reveal { opacity: 1; transform: none; }
+  }
+</style>
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#content">Перейти к содержанию</a>
+
+<!-- Повторно используемые иконки -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="logo" viewBox="0 0 64 40"><path fill-rule="evenodd" fill="currentColor" d="M20 2a18 18 0 1 1 0 36a18 18 0 1 1 0-36zM44 2a18 18 0 1 1 0 36a18 18 0 1 1 0-36z"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.5l5 5L19.5 7"/></symbol>
+    <symbol id="check-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".16"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7.5 12.3l3 3 6-6.3"/></symbol>
+    <symbol id="minus-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".25"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M8 12h8"/></symbol>
+    <symbol id="arr-l" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="arr-r" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="arr-d" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M6 13l6 6 6-6"/></symbol>
+    <symbol id="arr-ur" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M8 7h9v9"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="spark" viewBox="0 0 24 24"><path fill="currentColor" d="M13 1.5l1.9 6.1 6.1 1.9-6.1 1.9L13 17.5l-1.9-6.1L5 9.5l6.1-1.9zM5.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></symbol>
+    <symbol id="play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></symbol>
+    <symbol id="mic" viewBox="0 0 24 24"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></symbol>
+    <symbol id="film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path stroke="currentColor" stroke-width="2" d="M3 9h18M3 15h18M8 4v16M16 4v16"/></symbol>
+    <symbol id="target" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5"/></g></symbol>
+    <symbol id="gauge" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 12l4-4M7 15h.01M6.5 11h.01M9 7.5h.01M17.5 15h.01"/></g></symbol>
+    <symbol id="users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M15.5 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></g></symbol>
+    <symbol id="coins" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="14" cy="6" rx="6.5" ry="2.8"/><path d="M7.5 6v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8V6M7.5 10v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8v-4"/><ellipse cx="9" cy="16" rx="5.5" ry="2.5"/><path d="M3.5 16v2.5C3.5 19.9 6 21 9 21s5.5-1.1 5.5-2.5V16"/></g></symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-8.5-5.3-8.5-11.2A4.8 4.8 0 0 1 12 7a4.8 4.8 0 0 1 8.5 2.8C20.5 15.7 12 21 12 21z"/></symbol>
+    <symbol id="bubble" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3C6.8 3 3 6.5 3 10.8c0 2.4 1.2 4.5 3.1 5.9L5.5 21l4.3-2.4c.7.1 1.4.2 2.2.2 5.2 0 9-3.5 9-7.9S17.2 3 12 3z"/></symbol>
+    <symbol id="send" viewBox="0 0 24 24"><path fill="currentColor" d="M21.5 3L2.5 10.4l6.6 2.5 2.5 6.6z"/></symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10V7.5a5 5 0 0 1 10 0V10h.5A2.5 2.5 0 0 1 20 12.5v7a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 19.5v-7A2.5 2.5 0 0 1 6.5 10zm2.4 0h5.2V7.5a2.6 2.6 0 0 0-5.2 0z"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></g></symbol>
+    <symbol id="menu" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 8h16M4 16h16"/></symbol>
+    <symbol id="tg" viewBox="0 0 24 24"><path fill="currentColor" d="M21.9 4.3l-3.1 14.8c-.2 1-.9 1.3-1.7.8l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2l-11 6.9-4.7-1.5c-1-.3-1-1 .2-1.5L20.6 3c.9-.3 1.6.2 1.3 1.3z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="bg-word" aria-hidden="true">motive</div>
+
+  <nav class="nav" aria-label="Основная навигация">
+    <a href="#top" class="logo" aria-label="motive"><svg><use href="#logo"/></svg></a>
+    <div class="nav-date"><b>Набор открыт</b>Ноябрь — Декабрь 2026</div>
+    <div class="nav-links" id="navLinks">
+      <a href="#how">Как это работает</a>
+      <a href="#cases">Кейсы</a>
+      <a href="#why">Почему мы</a>
+      <a href="#pricing">Тарифы</a>
+    </div>
+    <a class="btn btn-dark btn-sm" href="#contact" data-contact>Обсудить проект</a>
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="navLinks" aria-label="Открыть меню"><svg><use href="#menu"/></svg></button>
+  </nav>
+
+  <picture>
+    <source srcset="img/hero.webp" type="image/webp">
+    <img class="hero-photo" src="img/hero.png" alt="Цифровой двойник в капюшоне и маске" width="1112" height="1415" fetchpriority="high">
+  </picture>
+
+  <div class="hero-grid">
+    <div class="hero-left" id="content" tabindex="-1">
+      <span class="badge"><svg><use href="#spark"/></svg>AI-студия цифровых двойников</span>
+      <h1>
+        <span class="line">Ваш цифровой</span>
+        <span class="line">двойник<span class="pill" aria-hidden="true">
+          <span class="tile t1"><svg style="color:#E83A0C"><use href="#play"/></svg></span>
+          <span class="tile t2"><svg style="color:#111"><use href="#mic"/></svg></span>
+          <span class="tile t3"><svg style="color:#E83A0C"><use href="#spark"/></svg></span>
+        </span></span>
+        <span class="line">снимает рилсы</span>
+      </h1>
+      <p class="hero-sub">Пока вы живёте своей жизнью. Создаём AI-аватара с вашим лицом и голосом, пишем сценарии и выпускаем рилсы каждый день — без камеры, студии и сотни дублей.</p>
+      <div class="hero-cta">
+        <a href="#how" class="btn btn-dark">Как это работает</a>
+        <a href="#pricing" class="btn btn-light">Смотреть тарифы</a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <p class="quote" id="quote" aria-live="off"></p>
+      <div class="slider-bar">
+        <div class="track"><i id="track"></i></div>
+        <div class="arrows">
+          <button id="qPrev" aria-label="Предыдущий отзыв"><svg><use href="#arr-l"/></svg></button>
+          <button id="qNext" aria-label="Следующий отзыв"><svg><use href="#arr-r"/></svg></button>
+        </div>
+      </div>
+      <div class="stat-label">Охват наших клиентов</div>
+      <div class="stat-num"><span id="count">0</span><em>M</em></div>
+      <div class="stat-note">просмотров в месяц</div>
+    </div>
+  </div>
+
+  <a href="#how" class="scroll-hint">Листайте дальше <span><svg width="18" height="18"><use href="#arr-d"/></svg></span></a>
+
+  <div class="marquee">
+    <div class="marquee-inner" id="marquee"></div>
+  </div>
+</header>
+
+<main>
+  <!-- ================= КАК РАБОТАЕТ ================= -->
+  <section class="section" id="how">
+    <div class="section-head reveal">
+      <span class="eyebrow">Процесс</span>
+      <h2 class="section-title">От 10 минут съёмки — к потоку рилсов</h2>
+      <p class="section-sub">Вы тратите на старт одно утро. Дальше двойник работает без выходных.</p>
+    </div>
+    <div class="steps">
+      <article class="step reveal">
+        <span class="step-chip">День 1</span>
+        <div class="step-num">01</div>
+        <h3>Короткая съёмка</h3>
+        <p>10 минут на телефон по нашему гайду: свет, ракурс, текст. Плюс 2 минуты голоса.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-chip">Дни 2–3</span>
+        <div class="step-num">02</div>
+        <h3>Обучаем двойника</h3>
+        <p>Собираем аватара в HeyGen и клонируем голос. Мимика, тембр, интонации — как у вас.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-chip">Дни 4–5</span>
+        <div class="step-num">03</div>
+        <h3>Контент-план и сценарии</h3>
+        <p>Изучаем нишу и конкурентов, пишем хуки и сценарии, которые удерживают до конца.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-chip">День 7+</span>
+        <div class="step-num">04</div>
+        <h3>Рилсы каждый день</h3>
+        <p>Монтаж, субтитры, обложки. Вы утверждаете ролик в Telegram — и он уходит в публикацию.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= КЕЙСЫ ================= -->
+  <section class="section" id="cases">
+    <div class="section-head reveal">
+      <span class="eyebrow">Кейсы</span>
+      <h2 class="section-title">Двойники, которые уже работают</h2>
+    </div>
+
+    <div class="cases reveal" role="region" aria-roledescription="карусель" aria-label="Кейсы клиентов">
+      <div class="stage" id="stage">
+        <div class="stage-top" aria-hidden="true">
+          <span class="logo"><svg><use href="#logo"/></svg>motive</span>
+          <div class="stage-icons">
+            <span><svg><use href="#search"/></svg></span>
+            <span><svg><use href="#users"/></svg></span>
+            <span><svg><use href="#send"/></svg></span>
+          </div>
+        </div>
+        <div class="stage-vbar" aria-hidden="true"><i id="vbar"></i></div>
+
+        <div aria-hidden="true" class="callout l c1"><span class="txt">Сценарий<small>по контент-плану</small></span><span class="dot"></span></div>
+        <div aria-hidden="true" class="callout l c2"><span class="txt">Клон голоса<small>ElevenLabs</small></span><span class="dot"></span></div>
+        <div aria-hidden="true" class="callout r c3"><span class="dot"></span><span class="txt">Цифровой аватар<small>HeyGen</small></span></div>
+        <div aria-hidden="true" class="callout r c4"><span class="dot"></span><span class="txt">Субтитры и монтаж<small>под каждую площадку</small></span></div>
+
+        <div class="phone" aria-hidden="true">
+          <div class="screen" id="screen">
+            <picture><source srcset="img/hero.webp" type="image/webp"><img src="img/hero.png" alt="" width="1112" height="1415" loading="lazy" decoding="async"></picture>
+            <div class="reel-top"><i></i><i></i><i></i></div>
+            <div class="reel-user"><b></b><span id="reelUser"></span></div>
+            <div class="subs fade" id="subs"></div>
+            <div class="reel-side">
+              <span><svg><use href="#heart"/></svg><span id="likes"></span></span>
+              <span><svg><use href="#bubble"/></svg><span id="comments"></span></span>
+              <span><svg><use href="#send"/></svg></span>
+            </div>
+            <div class="reel-caption" id="reelCap"></div>
+          </div>
+        </div>
+
+        <div class="stage-niche fade" id="stageNiche" aria-hidden="true"></div>
+        <div class="stage-metric fade" id="metric"></div>
+      </div>
+
+      <div class="cases-nav">
+        <div class="dots" id="dots"></div>
+        <div class="cases-arrows">
+          <button id="cPrev" aria-label="Предыдущий кейс"><svg><use href="#arr-l"/></svg></button>
+          <button id="cNext" aria-label="Следующий кейс"><svg><use href="#arr-r"/></svg></button>
+        </div>
+      </div>
+      <div class="case-info fade" id="caseInfo" aria-live="off"></div>
+    </div>
+  </section>
+
+  <!-- ================= ПОЧЕМУ МЫ ================= -->
+  <section class="section" id="why">
+    <div class="section-head reveal">
+      <h2 class="section-title">Почему motive</h2>
+    </div>
+
+    <div class="why">
+      <article class="why-card reveal">
+        <div class="why-art bars">
+          <div class="bar-row"><div class="bar soft" style="flex:0 0 52%"><i style="--w:78%"></i></div><span class="chip soft"><svg><use href="#target"/></svg>Охват</span></div>
+          <div class="bar-row"><div class="bar soft" style="flex:0 0 72%"><i style="--w:64%"></i></div><span class="chip soft"><svg><use href="#gauge"/></svg>Удержание</span></div>
+          <div class="bar-row"><div class="bar soft" style="flex:0 0 38%"><i style="--w:88%"></i></div><span class="chip soft"><svg><use href="#users"/></svg>Заявки</span></div>
+          <div class="bar-row"><div class="bar soft" style="flex:0 0 62%"><i style="--w:40%"></i></div><span class="chip soft"><svg><use href="#coins"/></svg>Стоимость</span></div>
+        </div>
+        <h3>Результат, а не ролики</h3>
+        <p>Считаем охват, удержание, заявки и стоимость ролика — каждый месяц контент работает на бизнес, а не просто заполняет ленту.</p>
+      </article>
+
+      <article class="why-card reveal">
+        <div class="why-art checks">
+          <div class="rail soft"></div>
+          <div class="row">
+            <div class="box soft"><svg><use href="#check"/></svg></div>
+            <div class="box mid"><svg><use href="#check"/></svg></div>
+            <div class="box soft"><svg><use href="#check"/></svg></div>
+          </div>
+        </div>
+        <h3>Двойник неотличим от вас</h3>
+        <p>Три круга проверки: лицо, голос, манера речи. Дорабатываем, пока близкие не перестанут видеть разницу.</p>
+      </article>
+    </div>
+
+    <div class="why second">
+      <article class="why-card reveal">
+        <div class="why-art">
+          <svg class="shield" viewBox="0 0 300 330" aria-hidden="true">
+            <defs>
+              <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#25252A"/><stop offset="1" stop-color="#151517"/></linearGradient>
+              <filter id="ss" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000" flood-opacity=".7"/></filter>
+            </defs>
+            <path filter="url(#ss)" fill="url(#sg)" stroke="rgba(255,255,255,.07)" d="M150 8c42 24 86 30 132 30v104c0 88-56 146-132 180C74 288 18 230 18 142V38c46 0 90-6 132-30z"/>
+          </svg>
+          <div class="lock soft"><svg style="color:#E8E6E3"><use href="#lock"/></svg></div>
+        </div>
+        <h3>Ваше лицо под защитой</h3>
+        <p>Договор на использование образа, NDA и шифрованное хранение исходников. Аватар принадлежит только вам.</p>
+      </article>
+
+      <article class="why-card reveal">
+        <div class="why-art">
+          <div class="chat soft"><i></i><i></i><i></i><i></i></div>
+          <div class="mini soft">
+            <div class="head">
+              <div class="ava soft"><svg style="color:#E8E6E3"><use href="#logo"/></svg></div>
+              <div class="lines"><i></i><i></i></div>
+            </div>
+            <div class="boxx soft"></div>
+            <div class="ok"><svg><use href="#check"/></svg></div>
+          </div>
+        </div>
+        <h3>Контент без вашего участия</h3>
+        <p>Вы утверждаете сценарии и ролики в Telegram в один клик. Всё остальное делают двойник и наша команда.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= ТАРИФЫ ================= -->
+  <section class="section" id="pricing">
+    <div class="section-head reveal">
+      <span class="eyebrow">Тарифы</span>
+      <h2 class="section-title">Сколько контента сделает ваш двойник</h2>
+      <p class="section-sub">Фиксированная цена за пакет. Без скрытых платежей и долгих договоров.</p>
+    </div>
+
+    <div class="plans">
+      <article class="plan reveal">
+        <h3 class="plan-name">Старт</h3>
+        <div class="plan-desc">Попробовать формат и протестировать нишу</div>
+        <div class="price"><b>$300</b><span>за пакет</span></div>
+        <ul>
+          <li><svg><use href="#check-c"/></svg>Цифровой аватар в HeyGen — 1 образ</li>
+          <li><svg><use href="#check-c"/></svg>Клонирование вашего голоса</li>
+          <li><svg><use href="#check-c"/></svg>Контент-план на 2 недели</li>
+          <li><svg><use href="#check-c"/></svg>8 сценариев под вашу нишу</li>
+          <li><svg><use href="#check-c"/></svg><span><b>8 готовых рилсов</b> с субтитрами</span></li>
+          <li><svg><use href="#check-c"/></svg>Гайд по публикации и хукам</li>
+          <li class="off"><svg><use href="#minus-c"/></svg>Подписки на сервисы — за ваш счёт</li>
+        </ul>
+        <a class="btn btn-dark" href="#contact" data-contact>Начать со Старта</a>
+      </article>
+
+      <article class="plan hot reveal">
+        <span class="plan-tag">Популярный</span>
+        <h3 class="plan-name">Про</h3>
+        <div class="plan-desc">Стабильный поток контента на месяц</div>
+        <div class="price"><b>$1&nbsp;000</b><span>в месяц</span></div>
+        <ul>
+          <li><svg><use href="#check-c"/></svg>Всё из тарифа «Старт»</li>
+          <li><svg><use href="#check-c"/></svg>2 образа аватара: разные локации и стиль</li>
+          <li><svg><use href="#check-c"/></svg>Контент-план на месяц</li>
+          <li><svg><use href="#check-c"/></svg><span><b>30 рилсов</b> с монтажом, b-roll и музыкой</span></li>
+          <li><svg><use href="#check-c"/></svg>Обложки и тексты к постам</li>
+          <li><svg><use href="#check-c"/></svg>Подписки HeyGen и ElevenLabs включены</li>
+          <li><svg><use href="#check-c"/></svg>Упаковка профиля</li>
+        </ul>
+        <a class="btn btn-light" href="#contact" data-contact>Выбрать Про</a>
+      </article>
+
+      <article class="plan reveal">
+        <h3 class="plan-name">Премиум</h3>
+        <div class="plan-desc">Двойник и продакшн полностью под ключ</div>
+        <div class="price"><b>$2&nbsp;500</b><span>за 2 месяца</span></div>
+        <ul>
+          <li><svg><use href="#check-c"/></svg>Всё из тарифа «Про»</li>
+          <li><svg><use href="#check-c"/></svg>Премиум-аватар студийного качества</li>
+          <li><svg><use href="#check-c"/></svg>До 4 образов аватара</li>
+          <li><svg><use href="#check-c"/></svg><span><b>60 рилсов + 4 длинных видео</b></span></li>
+          <li><svg><use href="#check-c"/></svg>Стратегия, аналитика и ведение публикаций</li>
+          <li><svg><use href="#check-c"/></svg>Озвучка на 3+ языках</li>
+          <li><svg><use href="#check-c"/></svg>Все подписки включены на 2 месяца</li>
+          <li><svg><use href="#check-c"/></svg>Личный продюсер, ответ в течение 24 ч</li>
+        </ul>
+        <a class="btn btn-orange" href="#contact" data-contact>Обсудить Премиум</a>
+      </article>
+    </div>
+    <p class="plans-note reveal">Можно оплатить частями: 50% на старте и 50% после утверждения аватара.</p>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="section" id="faq">
+    <div class="section-head reveal">
+      <span class="eyebrow">Вопросы</span>
+      <h2 class="section-title">Частые вопросы</h2>
+    </div>
+    <div class="faq" id="faqList"></div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section class="cta reveal" id="contact">
+    <div class="bg-word" aria-hidden="true">motive</div>
+    <h2>Запустите двойника за&nbsp;7&nbsp;дней</h2>
+    <div>
+      <p>Напишите нам — разберём вашу нишу, покажем примеры аватаров и подберём тариф. Первая консультация бесплатно.</p>
+      <a class="btn btn-dark" href="#contact" data-contact><svg width="22" height="22"><use href="#tg"/></svg>Написать в Telegram</a>
+      <small>Осталось 6 мест на ноябрь</small>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <a href="#top" class="logo"><svg><use href="#logo"/></svg>motive</a>
+  <nav aria-label="Навигация в подвале">
+    <a href="#how">Как это работает</a>
+    <a href="#cases">Кейсы</a>
+    <a href="#pricing">Тарифы</a>
+    <a href="#faq">Вопросы</a>
+    <a href="#contact" data-contact>Telegram</a>
+  </nav>
+  <span>© 2026 motive. Цифровые двойники для контента.</span>
+</footer>
+
+<script>
+  // ===== Настройки: замените на свои =====
+  const BRAND = 'motive';
+  const CONTACT_URL = 'https://t.me/your_username';
+
+  document.querySelectorAll('[data-contact]').forEach(a => {
+    a.href = CONTACT_URL; a.target = '_blank'; a.rel = 'noopener';
+    a.insertAdjacentHTML('beforeend', '<span class="sr-only"> (откроется в новой вкладке)</span>');
+  });
+
+  // Иконки — декоративные: подписи есть у кнопок и ссылок
+  document.querySelectorAll('svg:not([role])').forEach(svg => {
+    svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+  });
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Автопрокрутка: пауза при наведении/фокусе, выключена при prefers-reduced-motion
+  function autoplay({ el, step, ms }) {
+    let timer = null, hover = false;
+    const sync = () => {
+      clearInterval(timer); timer = null;
+      if (!reduceMotion && !hover) timer = setInterval(step, ms);
+    };
+    el.addEventListener('mouseenter', () => { hover = true; sync(); });
+    el.addEventListener('mouseleave', () => { hover = false; sync(); });
+    el.addEventListener('focusin', () => { hover = true; sync(); });
+    el.addEventListener('focusout', e => { if (!el.contains(e.relatedTarget)) { hover = false; sync(); } });
+    sync();
+    return sync;
+  }
+
+  // ===== Мобильное меню =====
+  const menuBtn = document.getElementById('menuBtn'), navLinks = document.getElementById('navLinks');
+  const setMenu = open => {
+    navLinks.classList.toggle('open', open);
+    menuBtn.setAttribute('aria-expanded', open);
+    menuBtn.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+  };
+  menuBtn.onclick = () => setMenu(!navLinks.classList.contains('open'));
+  navLinks.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && navLinks.classList.contains('open')) { setMenu(false); menuBtn.focus(); }
+  });
+
+  // ===== Бегущая строка =====
+  const tools = [
+    ['play', 'HeyGen'], ['mic', 'ElevenLabs'], ['film', 'CapCut'], ['heart', 'Instagram Reels'],
+    ['play', 'TikTok'], ['film', 'YouTube Shorts'], ['spark', 'Midjourney'], ['bubble', 'ChatGPT'],
+  ];
+  const row = tools.map(([i, t]) => `<li class="marquee-item"><svg aria-hidden="true"><use href="#${i}"/></svg>${t}</li>`).join('');
+  document.getElementById('marquee').innerHTML =
+    `<ul class="marquee-row" aria-label="Инструменты и площадки">${row}</ul><ul class="marquee-row" aria-hidden="true">${row}</ul>`;
+
+  // ===== Отзывы в hero =====
+  const quotes = [
+    ['За два месяца я не записала ни одного ролика — а блог вырос до 40 тысяч. Подписчики уверены, что это я.', 'Анна, нутрициолог'],
+    ['Двойник снимает обзоры квартир, пока я на показах. Заявок из рилсов стало втрое больше.', 'Игорь, риелтор'],
+    ['Один сценарий — ролики на трёх языках. Для онлайн-школы это экономия целой продакшн-команды.', 'Мария, основатель онлайн-школы'],
+  ];
+  let qi = 0;
+  const qEl = document.getElementById('quote'), track = document.getElementById('track');
+  function showQuote(n, user) {
+    qi = (n + quotes.length) % quotes.length;
+    qEl.setAttribute('aria-live', user ? 'polite' : 'off');
+    qEl.style.opacity = 0;
+    setTimeout(() => {
+      qEl.innerHTML = `«${quotes[qi][0]}»<small>— ${quotes[qi][1]}</small>`;
+      qEl.style.opacity = 1;
+    }, 250);
+    track.style.transform = `translateX(${qi * 100}%)`;
+  }
+  const resetQ = autoplay({
+    el: document.querySelector('.hero-right'),
+    step: () => showQuote(qi + 1), ms: 6000,
+  });
+  document.getElementById('qPrev').onclick = () => { showQuote(qi - 1, true); resetQ(); };
+  document.getElementById('qNext').onclick = () => { showQuote(qi + 1, true); resetQ(); };
+  showQuote(0);
+
+  // ===== Счётчик =====
+  const countEl = document.getElementById('count');
+  function countUp(to, ms) {
+    const t0 = performance.now();
+    (function tick(t) {
+      const p = Math.min(1, Math.max(0, (t - t0) / ms)), e = 1 - Math.pow(1 - p, 3);
+      countEl.textContent = (to * e).toFixed(1).replace('.', ',');
+      if (p < 1) requestAnimationFrame(tick);
+    })(t0);
+  }
+  if (reduceMotion) countEl.textContent = '4,2'; else setTimeout(() => countUp(4.2, 1800), 300);
+
+  // ===== Кейсы =====
+  const cases = [
+    {
+      title: 'Блог нутрициолога', niche: 'Здоровье', user: 'anna.nutri',
+      desc: 'Двойник ведёт блог 5 раз в неделю, пока Анна консультирует клиентов. Охват вырос в 6 раз за 2 месяца.',
+      did: 'Аватар и клон голоса, 40 рилсов, контент-план',
+      metric: '+38K', label: 'подписчиков за 60 дней',
+      subs: '3 продукта, которые вы <mark>зря</mark> считаете полезными',
+      cap: 'Сохраняй, чтобы не забыть 🥑', likes: '24,1K', comm: '812',
+      screen: 'linear-gradient(165deg, #FF7A3D 0%, #C2350B 55%, #3A0E03 100%)', glow: 'rgba(255,90,30,.38)',
+    },
+    {
+      title: 'Агентство недвижимости', niche: 'Недвижимость', user: 'kvadrat.realty',
+      desc: 'Обзоры объектов без выезда на съёмку: двойник презентует квартиры по фото и планировкам.',
+      did: '2 образа, 60 рилсов, шаблоны обзоров',
+      metric: '×3,4', label: 'заявок из Reels',
+      subs: 'Двушка у метро <mark>дешевле рынка</mark> — разбираем',
+      cap: 'Пиши «хочу» в директ 🏠', likes: '9 870', comm: '356',
+      screen: 'linear-gradient(165deg, #5B6CFF 0%, #2A2F8F 55%, #0B0D2E 100%)', glow: 'rgba(91,108,255,.32)',
+    },
+    {
+      title: 'Онлайн-школа английского', niche: 'Образование', user: 'speak.school',
+      desc: 'Мультиязычный двойник основательницы: ролики на русском и английском из одного сценария.',
+      did: 'Озвучка на 3 языках, 90 роликов, воронка',
+      metric: '1,2M', label: 'просмотров за месяц',
+      subs: 'Never say <mark>this</mark> in a job interview',
+      cap: 'Часть 3 уже в профиле 🇬🇧', likes: '61,3K', comm: '1 904',
+      screen: 'linear-gradient(165deg, #2EC5A0 0%, #0E6E5A 55%, #03201B 100%)', glow: 'rgba(46,197,160,.3)',
+    },
+    {
+      title: 'Бренд одежды', niche: 'Fashion / E-com', user: 'nord.wear',
+      desc: 'Двойник-амбассадор показывает новинки каждый день — без фотосессий, моделей и аренды студии.',
+      did: 'Аватар-амбассадор, 30 рилсов, обложки',
+      metric: '−63%', label: 'стоимость контента',
+      subs: 'Худи, которое <mark>переживёт</mark> эту зиму',
+      cap: 'Дроп в пятницу в 12:00 🖤', likes: '15,6K', comm: '644',
+      screen: 'linear-gradient(165deg, #9A9AA2 0%, #3C3C42 55%, #0E0E10 100%)', glow: 'rgba(200,200,210,.2)',
+    },
+  ];
+  const $ = id => document.getElementById(id);
+  const dots = $('dots');
+  dots.innerHTML = cases.map((c, i) => `<button aria-label="Кейс ${i + 1}: ${c.title}"></button>`).join('');
+  let ci = 0;
+  const fades = ['subs', 'metric', 'caseInfo', 'stageNiche'].map($);
+  function renderCase(n, instant, user) {
+    ci = (n + cases.length) % cases.length;
+    const c = cases[ci];
+    $('caseInfo').setAttribute('aria-live', user ? 'polite' : 'off');
+    [...dots.children].forEach((d, i) => d.setAttribute('aria-current', i === ci));
+    $('vbar').style.top = `${ci * 25}%`;
+    $('screen').style.background = c.screen;
+    $('stage').style.setProperty('--glow', c.glow);
+    const apply = () => {
+      $('subs').innerHTML = c.subs;
+      $('reelUser').textContent = c.user;
+      $('reelCap').textContent = c.cap;
+      $('likes').textContent = c.likes;
+      $('comments').textContent = c.comm;
+      $('stageNiche').textContent = c.niche;
+      $('metric').innerHTML = `<b>${c.metric}</b><span>${c.label}</span>`;
+      $('caseInfo').innerHTML = `
+        <h3>${c.title}</h3>
+        <dl><dt>Описание</dt><dd>${c.desc}</dd></dl>
+        <dl><dt>Что сделали</dt><dd>${c.did}</dd></dl>
+        <dl><dt>Ниша</dt><dd>${c.niche}</dd></dl>
+        <p class="sr-only">Результат: ${c.metric} ${c.label}</p>`;
+      fades.forEach(f => f.classList.remove('out'));
+    };
+    if (instant) return apply();
+    fades.forEach(f => f.classList.add('out'));
+    setTimeout(apply, 300);
+  }
+  const resetC = autoplay({
+    el: document.querySelector('.cases'),
+    step: () => renderCase(ci + 1), ms: 7000,
+  });
+  [...dots.children].forEach((d, i) => d.onclick = () => { renderCase(i, false, true); resetC(); });
+  $('cPrev').onclick = () => { renderCase(ci - 1, false, true); resetC(); };
+  $('cNext').onclick = () => { renderCase(ci + 1, false, true); resetC(); };
+  renderCase(0, true);
+
+  // ===== FAQ =====
+  const faq = [
+    ['Двойник действительно будет похож на меня?', 'Да. Мы обучаем аватара на вашем видео и голосе, а затем проводим три круга проверки. Большинство зрителей не замечают разницы — особенно в формате коротких вертикальных роликов.'],
+    ['Сколько времени нужно от меня?', 'Около часа на старте: 10 минут съёмки по нашему гайду, 2 минуты записи голоса и созвон по стратегии. Дальше — только утверждение сценариев в Telegram.'],
+    ['Нужна ли профессиональная камера или студия?', 'Нет. Достаточно современного смартфона и окна с дневным светом. Подробный гайд по съёмке пришлём после оплаты.'],
+    ['Кому принадлежит аватар и голос?', 'Только вам. Мы подписываем договор на использование образа и NDA. После окончания работы передаём доступы или удаляем данные — по вашему выбору.'],
+    ['Что входит в «оплату подписок»?', 'Аватары и голос работают на платных сервисах HeyGen и ElevenLabs. В тарифах «Про» и «Премиум» эти подписки уже включены в стоимость, в «Старте» вы оплачиваете их сами (примерно $30–60 в месяц).'],
+    ['Что будет после окончания пакета?', 'Можно продлить тариф, перейти на другой или забрать аватара и вести контент самостоятельно — мы передадим все наработки и шаблоны.'],
+  ];
+  $('faqList').innerHTML = faq.map(([q, a], i) => `
+    <details class="reveal"${i === 0 ? ' open' : ''}>
+      <summary>${q}<span><svg><use href="#plus"/></svg></span></summary>
+      <div class="ans">${a}</div>
+    </details>`).join('');
+
+  // ===== Появление при скролле =====
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: .15, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
