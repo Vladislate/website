@@ -275,7 +275,7 @@
     box-shadow: 0 50px 80px -20px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,255,255,.08);
   }
   .screen { position: relative; width: 100%; height: 100%; border-radius: 34px; overflow: hidden; background: var(--screen, linear-gradient(160deg, #FF5A1F, #7A1A05)); transition: background .6s; }
-  .screen img { position: absolute; left: 50%; bottom: -10px; height: 92%; width: auto; max-width: none; transform: translateX(-50%); }
+  .screen img { transition: opacity .35s ease; position: absolute; left: 50%; bottom: -10px; height: 92%; width: auto; max-width: none; transform: translateX(-50%); }
   .screen .reel-top { position: absolute; top: 18px; left: 16px; right: 16px; display: flex; gap: 4px; }
   .screen .reel-top i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,.35); }
   .screen .reel-top i:first-child { background: #fff; }
@@ -710,7 +710,7 @@
 
         <div class="phone" aria-hidden="true">
           <div class="screen" id="screen">
-            <picture><source srcset="img/hero.webp" type="image/webp"><img src="img/hero.png" alt="" width="1112" height="1415" loading="lazy" decoding="async"></picture>
+            <picture><source id="reelSrc" srcset="img/case-woman.webp" type="image/webp"><img id="reelImg" src="img/case-woman.png" alt="" width="1086" height="1448" decoding="async"></picture>
             <div class="reel-top"><i></i><i></i><i></i></div>
             <div class="reel-user"><b></b><span id="reelUser"></span></div>
             <div class="subs fade" id="subs"></div>
@@ -1001,6 +1001,7 @@
       subs: '3 продукта, которые вы <mark>зря</mark> считаете полезными',
       cap: 'Сохраняй, чтобы не забыть 🥑', likes: '24,1K', comm: '812',
       screen: 'linear-gradient(165deg, #FF7A3D 0%, #C2350B 55%, #3A0E03 100%)', glow: 'rgba(255,90,30,.38)',
+      photo: 'case-woman',
     },
     {
       title: 'Агентство недвижимости', niche: 'Недвижимость', user: 'kvadrat.realty',
@@ -1010,15 +1011,7 @@
       subs: 'Двушка у метро <mark>дешевле рынка</mark> — разбираем',
       cap: 'Пиши «хочу» в директ 🏠', likes: '9 870', comm: '356',
       screen: 'linear-gradient(165deg, #5B6CFF 0%, #2A2F8F 55%, #0B0D2E 100%)', glow: 'rgba(91,108,255,.32)',
-    },
-    {
-      title: 'Онлайн-школа английского', niche: 'Образование', user: 'speak.school',
-      desc: 'Мультиязычный двойник основательницы: ролики на русском и английском из одного сценария.',
-      did: 'Озвучка на 3 языках, 90 роликов, воронка',
-      metric: '1,2M', label: 'просмотров за месяц',
-      subs: 'Never say <mark>this</mark> in a job interview',
-      cap: 'Часть 3 уже в профиле 🇬🇧', likes: '61,3K', comm: '1 904',
-      screen: 'linear-gradient(165deg, #2EC5A0 0%, #0E6E5A 55%, #03201B 100%)', glow: 'rgba(46,197,160,.3)',
+      photo: 'case-street',
     },
     {
       title: 'Бренд одежды', niche: 'Fashion / E-com', user: 'nord.wear',
@@ -1028,9 +1021,11 @@
       subs: 'Худи, которое <mark>переживёт</mark> эту зиму',
       cap: 'Дроп в пятницу в 12:00 🖤', likes: '15,6K', comm: '644',
       screen: 'linear-gradient(165deg, #9A9AA2 0%, #3C3C42 55%, #0E0E10 100%)', glow: 'rgba(200,200,210,.2)',
+      photo: 'hero',
     },
   ];
   const $ = id => document.getElementById(id);
+  addEventListener('load', () => cases.forEach(c => { new Image().src = `img/${c.photo}.webp`; }));
   const dots = $('dots');
   dots.innerHTML = cases.map((c, i) => `<button aria-label="Кейс ${i + 1}: ${c.title}"></button>`).join('');
   let ci = 0;
@@ -1040,10 +1035,14 @@
     const c = cases[ci];
     $('caseInfo').setAttribute('aria-live', user ? 'polite' : 'off');
     [...dots.children].forEach((d, i) => d.setAttribute('aria-current', i === ci));
-    $('vbar').style.top = `${ci * 25}%`;
+    $('vbar').style.height = `${100 / cases.length}%`;
+    $('vbar').style.top = `${ci * 100 / cases.length}%`;
     $('screen').style.background = c.screen;
     $('stage').style.setProperty('--glow', c.glow);
     const apply = () => {
+      $('reelSrc').srcset = `img/${c.photo}.webp`;
+      $('reelImg').src = `img/${c.photo}.png`;
+      $('reelImg').style.opacity = 1;
       $('subs').innerHTML = c.subs;
       $('reelUser').textContent = c.user;
       $('reelCap').textContent = c.cap;
@@ -1061,6 +1060,7 @@
     };
     if (instant) return apply();
     fades.forEach(f => f.classList.add('out'));
+    $('reelImg').style.opacity = 0;
     setTimeout(apply, 300);
   }
   const resetC = autoplay({
