@@ -902,9 +902,10 @@
 <script>
   // ===== Настройки: замените на свои =====
   const BRAND = 'motive';
-  const CONTACT_URL = 'https://t.me/your_username';
+  // Ссылка на ваш Telegram, например 'https://t.me/ваш_ник'. Пока пусто — кнопки ведут к блоку контактов.
+  const CONTACT_URL = '';
 
-  document.querySelectorAll('[data-contact]').forEach(a => {
+  if (CONTACT_URL) document.querySelectorAll('[data-contact]').forEach(a => {
     a.href = CONTACT_URL; a.target = '_blank'; a.rel = 'noopener';
     a.insertAdjacentHTML('beforeend', '<span class="sr-only"> (откроется в новой вкладке)</span>');
   });
